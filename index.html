@@ -326,6 +326,110 @@ svg { display: block; width: 100%; height: auto; }
 }
 .hitl-card.fires .fires-tag { display: inline-block; }
 
+/* === GUARDRAIL LAYER CARDS === */
+.layer-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+.layer-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 18px 20px;
+  border-left: 4px solid var(--border-2);
+  transition: all 0.18s ease;
+}
+.layer-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-2);
+  box-shadow: 0 6px 24px -8px rgba(0,0,0,0.5);
+}
+.layer-card.l-input    { border-left-color: var(--accent); }
+.layer-card.l-input:hover    { box-shadow: 0 6px 24px -8px rgba(245,166,35,0.4); }
+.layer-card.l-tool     { border-left-color: var(--teal); }
+.layer-card.l-tool:hover     { box-shadow: 0 6px 24px -8px rgba(79,195,217,0.4); }
+.layer-card.l-hallu    { border-left-color: var(--amber); }
+.layer-card.l-hallu:hover    { box-shadow: 0 6px 24px -8px rgba(251,191,36,0.4); }
+.layer-card.l-output   { border-left-color: var(--green); }
+.layer-card.l-output:hover   { box-shadow: 0 6px 24px -8px rgba(74,222,128,0.4); }
+
+.layer-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+.layer-head .name { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.5px; }
+.layer-card.l-input .layer-head .name  { color: var(--accent); }
+.layer-card.l-tool .layer-head .name   { color: var(--teal); }
+.layer-card.l-hallu .layer-head .name  { color: var(--amber); }
+.layer-card.l-output .layer-head .name { color: var(--green); }
+.layer-head .file { font-family: var(--mono); font-size: 10px; color: var(--text-mute); }
+
+.layer-card .kor-title { font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.layer-card .desc { font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55; }
+.layer-card .code-bar {
+  background: var(--bg-sub); padding: 8px 10px; border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;
+}
+.layer-card .tag-row { display: flex; gap: 8px; font-family: var(--mono); font-size: 10px; align-items: center; }
+.layer-card .tag {
+  padding: 3px 8px; border-radius: 3px; border: 1px solid;
+  transition: background 0.18s;
+}
+.layer-card.l-input .tag  { background: rgba(245,166,35,0.12); color: var(--accent); border-color: rgba(245,166,35,0.3); }
+.layer-card.l-tool .tag   { background: rgba(79,195,217,0.12); color: var(--teal); border-color: rgba(79,195,217,0.3); }
+.layer-card.l-hallu .tag  { background: rgba(251,191,36,0.12); color: var(--amber); border-color: rgba(251,191,36,0.3); }
+.layer-card.l-output .tag { background: rgba(74,222,128,0.12); color: var(--green); border-color: rgba(74,222,128,0.3); }
+.layer-card .tag-note { color: var(--text-mute); }
+.layer-card .otel-line {
+  font-family: var(--mono); font-size: 10.5px; color: var(--teal);
+  margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
+}
+
+/* When a sample is selected, layers can pulse to indicate they fire */
+.layer-card.fires {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface-2, #1a2030) 100%);
+  border-color: currentColor;
+}
+.layer-card.fires.l-input  { box-shadow: 0 0 0 1px rgba(245,166,35,0.4), 0 6px 24px -8px rgba(245,166,35,0.5); }
+.layer-card.fires.l-tool   { box-shadow: 0 0 0 1px rgba(79,195,217,0.4), 0 6px 24px -8px rgba(79,195,217,0.5); }
+.layer-card.fires.l-hallu  { box-shadow: 0 0 0 1px rgba(251,191,36,0.4), 0 6px 24px -8px rgba(251,191,36,0.5); }
+.layer-card.fires.l-output { box-shadow: 0 0 0 1px rgba(74,222,128,0.4), 0 6px 24px -8px rgba(74,222,128,0.5); }
+
+.callout-note {
+  margin-top: 20px; padding: 14px 18px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-left: 3px solid var(--accent); border-radius: 8px;
+  font-size: 12px; line-height: 1.6;
+}
+.callout-note.warn { border-left-color: var(--berry); }
+.callout-note strong { color: var(--text); }
+.callout-note .body { color: var(--text-mute); }
+
+/* === RBAC SECTION === */
+.rbac-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.rbac-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px;
+  transition: all 0.18s ease;
+}
+.rbac-card:hover { transform: translateY(-2px); border-color: var(--border-2); box-shadow: 0 6px 24px -8px rgba(0,0,0,0.5); }
+.rbac-card .eyebrow {
+  font-family: var(--mono); font-size: 11px; color: var(--accent);
+  letter-spacing: 0.5px; margin-bottom: 10px;
+}
+.rbac-card .title { font-size: 14px; font-weight: 600; margin-bottom: 14px; }
+.rbac-card pre {
+  background: #060a14; padding: 14px; border-radius: 6px;
+  font-family: var(--mono); font-size: 11.5px; color: var(--teal);
+  overflow-x: auto; line-height: 1.6; border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+.rbac-card .pre-kw  { color: var(--accent); }
+.rbac-card .pre-com { color: var(--text-dim); font-style: italic; }
+.rbac-card .blurb { font-size: 12px; color: var(--text-mute); line-height: 1.6; }
+.rbac-card ul { list-style: none; padding: 0; margin: 0; }
+.rbac-card ul li { padding: 10px 0; border-bottom: 1px dashed var(--border); transition: background 0.15s; }
+.rbac-card ul li:last-child { border-bottom: none; }
+.rbac-card ul li:hover { background: rgba(245,166,35,0.04); }
+.rbac-card ul li .lt { font-size: 13px; font-weight: 600; }
+.rbac-card ul li .ls {
+  font-size: 11.5px; color: var(--text-mute); margin-top: 4px;
+  font-family: var(--kor); font-style: italic;
+}
+.rbac-card ul li .ls.mono { font-family: var(--mono); }
+
 /* === FLOW JUSTIFICATION === */
 .reasons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .reason {
@@ -846,75 +950,71 @@ footer {
     <p>All four layers exist in the codebase, but not via a uniform decorator API. Three use manual hooks placed at the right Flow stage; one uses CrewAI's official <code class="mono" style="color:var(--teal);">Task(guardrail=...)</code> parameter. Each layer emits a distinct OTel event family.</p>
   </div>
 
-  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
-    <!-- L1 -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--accent);">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
-        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px;">LAYER 1 · INPUT PII</span>
-        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">main.py:233</span>
+  <div class="layer-grid">
+    <div class="layer-card l-input" data-layer="l1">
+      <div class="layer-head">
+        <span class="name">LAYER 1 · INPUT PII</span>
+        <span class="file">main.py:233</span>
       </div>
-      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">입력 PII 스캔</div>
-      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Scans <code>document_path</code> text and masks regulated identifiers before any LLM ever sees them.</div>
-      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">scan_and_mask_input(document_path)</div>
-      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
-        <span style="background: rgba(245,166,35,0.12); color: var(--accent); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(245,166,35,0.3);">manual hook</span>
-        <span style="color: var(--text-mute); align-self: center;">in <code>@listen</code> input_pii_scan</span>
+      <div class="kor-title">입력 PII 스캔</div>
+      <div class="desc">Scans <code>document_path</code> text and masks regulated identifiers before any LLM ever sees them.</div>
+      <div class="code-bar">scan_and_mask_input(document_path)</div>
+      <div class="tag-row">
+        <span class="tag">manual hook</span>
+        <span class="tag-note">in <code>@listen</code> input_pii_scan</span>
       </div>
-      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l1_input_pii.*</div>
+      <div class="otel-line">OTel: guardrail.l1_input_pii.*</div>
     </div>
 
-    <!-- L2 -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--teal);">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
-        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--teal); letter-spacing: 0.5px;">LAYER 2 · TOOL RBAC</span>
-        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">triage_crew.py:29</span>
+    <div class="layer-card l-tool" data-layer="l2">
+      <div class="layer-head">
+        <span class="name">LAYER 2 · TOOL RBAC</span>
+        <span class="file">triage_crew.py:29</span>
       </div>
-      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">도구 단위 RBAC</div>
-      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Wraps every tool's <code>_run</code> with a persona allow-list check — the shared-agent RBAC mechanism for this project.</div>
-      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">wrap_tools_with_rbac([...])</div>
-      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
-        <span style="background: rgba(79,195,217,0.12); color: var(--teal); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(79,195,217,0.3);">tool wrap</span>
-        <span style="color: var(--text-mute); align-self: center;">at crew construction</span>
+      <div class="kor-title">도구 단위 RBAC</div>
+      <div class="desc">Wraps every tool's <code>_run</code> with a persona allow-list check — the shared-agent RBAC mechanism for this project.</div>
+      <div class="code-bar">wrap_tools_with_rbac([...])</div>
+      <div class="tag-row">
+        <span class="tag">tool wrap</span>
+        <span class="tag-note">at crew construction</span>
       </div>
-      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l2_tool_rbac.*</div>
+      <div class="otel-line">OTel: guardrail.l2_tool_rbac.*</div>
     </div>
 
-    <!-- L3 -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--amber);">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
-        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--amber); letter-spacing: 0.5px;">LAYER 3 · HALLUCINATION</span>
-        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">main.py:285</span>
+    <div class="layer-card l-hallu" data-layer="l3">
+      <div class="layer-head">
+        <span class="name">LAYER 3 · HALLUCINATION</span>
+        <span class="file">main.py:285</span>
       </div>
-      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">환각 검증</div>
-      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Scores each sub-agent output (intake / kyc / risk) for hallucination and gates the run. Aggregated post-kickoff.</div>
-      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">score_hallucination() + hallucination_gate()</div>
-      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
-        <span style="background: rgba(251,191,36,0.12); color: var(--amber); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(251,191,36,0.3);">manual hook</span>
-        <span style="color: var(--text-mute); align-self: center;">post-<code>crew().kickoff()</code></span>
+      <div class="kor-title">환각 검증</div>
+      <div class="desc">Scores each sub-agent output (intake / kyc / risk) for hallucination and gates the run. Aggregated post-kickoff.</div>
+      <div class="code-bar">score_hallucination() + hallucination_gate()</div>
+      <div class="tag-row">
+        <span class="tag">manual hook</span>
+        <span class="tag-note">post-<code>crew().kickoff()</code></span>
       </div>
-      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l3_hallucination.*</div>
+      <div class="otel-line">OTel: guardrail.l3_hallucination.*</div>
     </div>
 
-    <!-- L4 -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--green);">
-      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
-        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--green); letter-spacing: 0.5px;">LAYER 4 · OUTPUT POLICY</span>
-        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">triage_crew.py:101 · 110 · 119 · 127</span>
+    <div class="layer-card l-output" data-layer="l4">
+      <div class="layer-head">
+        <span class="name">LAYER 4 · OUTPUT POLICY</span>
+        <span class="file">triage_crew.py:101 · 110 · 119 · 127</span>
       </div>
-      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">출력 정책 (RRN · 전화 · 계좌 · 통화)</div>
-      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Regex checks for resident registration numbers, phone numbers, account numbers, and non-KRW currency in every task's final output.</div>
-      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">Task(guardrail=policy_guardrail, ...)</div>
-      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
-        <span style="background: rgba(74,222,128,0.12); color: var(--green); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(74,222,128,0.3);">canonical API</span>
-        <span style="color: var(--text-mute); align-self: center;">CrewAI auto-retries on False</span>
+      <div class="kor-title">출력 정책 (RRN · 전화 · 계좌 · 통화)</div>
+      <div class="desc">Regex checks for resident registration numbers, phone numbers, account numbers, and non-KRW currency in every task's final output.</div>
+      <div class="code-bar">Task(guardrail=policy_guardrail, ...)</div>
+      <div class="tag-row">
+        <span class="tag">canonical API</span>
+        <span class="tag-note">CrewAI auto-retries on False</span>
       </div>
-      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l4_output_policy.*</div>
+      <div class="otel-line">OTel: guardrail.l4_output_policy.*</div>
     </div>
   </div>
 
-  <div style="margin-top: 20px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; font-size: 12px; line-height: 1.6;">
-    <strong style="color: var(--text);">Wiring note.</strong>
-    <span style="color: var(--text-mute);">CrewAI's canonical surface for guardrails is <code class="mono" style="color: var(--teal);">Task(guardrail=fn)</code> (auto-retry on False), <code class="mono" style="color: var(--teal);">@before_tool_call</code> / <code class="mono" style="color: var(--teal);">@after_tool_call</code>, and <code class="mono" style="color: var(--teal);">@before_llm_call</code> / <code class="mono" style="color: var(--teal);">@after_llm_call</code> from <code class="mono" style="color: var(--teal);">crewai.hooks</code>. Only L4 uses the canonical API today; L1–L3 use manual hooks placed at the right Flow stage. Migration to the canonical hooks is on the post-PoC roadmap.</span>
+  <div class="callout-note">
+    <strong>Wiring note.</strong>
+    <span class="body">CrewAI's canonical surface for guardrails is <code class="mono" style="color: var(--teal);">Task(guardrail=fn)</code> (auto-retry on False), <code class="mono" style="color: var(--teal);">@before_tool_call</code> / <code class="mono" style="color: var(--teal);">@after_tool_call</code>, and <code class="mono" style="color: var(--teal);">@before_llm_call</code> / <code class="mono" style="color: var(--teal);">@after_llm_call</code> from <code class="mono" style="color: var(--teal);">crewai.hooks</code>. Only L4 uses the canonical API today; L1–L3 use manual hooks placed at the right Flow stage. Migration to the canonical hooks is on the post-PoC roadmap.</span>
   </div>
 </section>
 
@@ -925,53 +1025,49 @@ footer {
     <p>The same agent definition is shared across operators. RBAC is enforced at the tool layer — <code class="mono" style="color:var(--teal);">wrap_tools_with_rbac()</code> wraps every tool's <code class="mono" style="color:var(--teal);">_run</code> with a persona allow-list check at crew construction time. One agent definition, per-call permission context.</p>
   </div>
 
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-    <!-- left: mechanism -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;">
-      <div style="font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 10px;">MECHANISM · 메커니즘</div>
-      <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">One definition, persona-scoped tool whitelist</div>
-      <pre style="background: #060a14; padding: 14px; border-radius: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--teal); overflow-x: auto; line-height: 1.6; border: 1px solid var(--border); margin-bottom: 14px;"><span style="color: #F5A623;">from</span> .governance.rbac <span style="color: #F5A623;">import</span> wrap_tools_with_rbac
+  <div class="rbac-grid">
+    <div class="rbac-card">
+      <div class="eyebrow">MECHANISM · 메커니즘</div>
+      <div class="title">One definition, persona-scoped tool whitelist</div>
+      <pre><span class="pre-kw">from</span> .governance.rbac <span class="pre-kw">import</span> wrap_tools_with_rbac
 
-<span style="color: #6a7287; font-style: italic;"># at crew construction (triage_crew.py:29)</span>
+<span class="pre-com"># at crew construction (triage_crew.py:29)</span>
 tools = wrap_tools_with_rbac([
     ocr_tool, kyc_lookup, credit_score, sanctions_check,
 ])
 
-<span style="color: #6a7287; font-style: italic"># wrap_tools_with_rbac patches each tool's _run</span>
-<span style="color: #6a7287; font-style: italic"># to check active persona against tool whitelist;</span>
-<span style="color: #6a7287; font-style: italic"># denied calls return early and emit OTel event.</span></pre>
-      <div style="font-size: 12px; color: var(--text-mute); line-height: 1.6;">
-        Active persona is read from the operator's JWT (or <code>DEMO_OPERATOR_ROLE</code> env var in the demo). The wrap happens once at crew construction; per-call enforcement is automatic for every <code>_run</code> invocation thereafter.
-      </div>
+<span class="pre-com"># wrap_tools_with_rbac patches each tool's _run</span>
+<span class="pre-com"># to check active persona against tool whitelist;</span>
+<span class="pre-com"># denied calls return early and emit OTel event.</span></pre>
+      <div class="blurb">Active persona is read from the operator's JWT (or <code>DEMO_OPERATOR_ROLE</code> env var in the demo). The wrap happens once at crew construction; per-call enforcement is automatic for every <code>_run</code> invocation thereafter.</div>
     </div>
 
-    <!-- right: properties -->
-    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;">
-      <div style="font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 10px;">PROPERTIES · 속성</div>
-      <ul style="list-style: none; padding: 0; margin: 0;">
-        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
-          <div style="font-size: 13px; font-weight: 600;">No per-user agent re-instantiation</div>
-          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">사용자마다 에이전트를 새로 만들지 않음 — 정의는 하나</div>
+    <div class="rbac-card">
+      <div class="eyebrow">PROPERTIES · 속성</div>
+      <ul>
+        <li>
+          <div class="lt">No per-user agent re-instantiation</div>
+          <div class="ls">사용자마다 에이전트를 새로 만들지 않음 — 정의는 하나</div>
         </li>
-        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
-          <div style="font-size: 13px; font-weight: 600;">Tool-call denial is RBAC's main enforcement point</div>
-          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">권한 분리의 핵심은 도구 호출 단계의 차단</div>
+        <li>
+          <div class="lt">Tool-call denial is RBAC's main enforcement point</div>
+          <div class="ls">권한 분리의 핵심은 도구 호출 단계의 차단</div>
         </li>
-        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
-          <div style="font-size: 13px; font-weight: 600;">Each denied call emits a distinct OTel event</div>
-          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--mono);">guardrail.l2_tool_rbac.deny</div>
+        <li>
+          <div class="lt">Each denied call emits a distinct OTel event</div>
+          <div class="ls mono">guardrail.l2_tool_rbac.deny</div>
         </li>
-        <li style="padding: 10px 0;">
-          <div style="font-size: 13px; font-weight: 600;">Defined in <code style="font-size: 11px;">governance/rbac.py</code></div>
-          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">페르소나 정의 + 도구 화이트리스트가 한 파일에</div>
+        <li>
+          <div class="lt">Defined in <code style="font-size: 11px;">governance/rbac.py</code></div>
+          <div class="ls">페르소나 정의 + 도구 화이트리스트가 한 파일에</div>
         </li>
       </ul>
     </div>
   </div>
 
-  <div style="margin-top: 20px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--berry); border-radius: 8px; font-size: 12px; line-height: 1.6;">
-    <strong style="color: var(--text);">Refactor candidate.</strong>
-    <span style="color: var(--text-mute);">Tool-wrapping monkey-patches <code class="mono" style="color: var(--teal);">_run</code>, which is fragile against CrewAI internal changes. Canonical refactor: replace with <code class="mono" style="color: var(--teal);">@before_tool_call</code> hook reading <code class="mono" style="color: var(--teal);">context.tool_name</code> + active persona, returning <code class="mono" style="color: var(--teal);">False</code> to block. Same OTel event semantics, stable across CrewAI versions.</span>
+  <div class="callout-note warn">
+    <strong>Refactor candidate.</strong>
+    <span class="body">Tool-wrapping monkey-patches <code class="mono" style="color: var(--teal);">_run</code>, which is fragile against CrewAI internal changes. Canonical refactor: replace with <code class="mono" style="color: var(--teal);">@before_tool_call</code> hook reading <code class="mono" style="color: var(--teal);">context.tool_name</code> + active persona, returning <code class="mono" style="color: var(--teal);">False</code> to block. Same OTel event semantics, stable across CrewAI versions.</span>
   </div>
 </section>
 
@@ -1254,6 +1350,22 @@ function renderPath() {
     if (state.sample && state.sample.outcome === "hitl" && card.dataset.firesOn === "hitl") {
       card.classList.add("fires");
     }
+  });
+
+  // Guardrail layer cards: L4 always runs (every sample); L1 always runs (PII scan);
+  // L3 hallucination scoring runs every kickoff. L2 RBAC fires per tool-call.
+  // For sample-3 (HITL), L1 + L3 highlight because PII scan + hallucination both gate the run.
+  document.querySelectorAll(".layer-card").forEach(card => {
+    card.classList.remove("fires");
+    if (!state.sample) return;
+    const layer = card.dataset.layer;
+    const outcome = state.sample.outcome;
+    // every sample exercises L1 (PII scan) and L4 (output policy)
+    if (layer === "l1" || layer === "l4") card.classList.add("fires");
+    // HITL sample additionally triggers L3 (hallucination gate flagged)
+    if (outcome === "hitl" && layer === "l3") card.classList.add("fires");
+    // L2 (tool RBAC) — fires when KYC tool is invoked; review/hitl samples exercise KYC
+    if ((outcome === "review" || outcome === "hitl") && layer === "l2") card.classList.add("fires");
   });
 }
 
