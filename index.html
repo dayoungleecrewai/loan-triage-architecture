@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Loan Application Triage — Automation Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --bg-sub: #0e1322;
+  --surface: #131826;
+  --surface-2: #1a2030;
+  --surface-3: #232a3d;
+  --border: #2a3142;
+  --border-2: #3a4259;
+  --text: #e6e9f0;
+  --text-mute: #8a92a6;
+  --text-dim: #6a7287;
+  --accent: #F5A623;        /* orange — @start / brand */
+  --teal: #4FC3D9;          /* teal — @listen / agents */
+  --navy: #5b8def;          /* blue — @router */
+  --berry: #d9486f;         /* berry — HITL / danger */
+  --green: #4ade80;         /* success */
+  --amber: #fbbf24;         /* mid-risk */
+  --kor: "Noto Sans KR", -apple-system, sans-serif;
+  --mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--bg); color: var(--text); font-family: "Inter", -apple-system, sans-serif; -webkit-font-smoothing: antialiased; line-height: 1.5; }
+body { padding-bottom: 80px; }
+.kor { font-family: var(--kor); }
+.mono { font-family: var(--mono); }
+
+/* === NAV === */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(10, 14, 26, 0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 14px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+}
+.nav-brand { display: flex; align-items: center; gap: 12px; font-weight: 600; }
+.nav-brand .badge {
+  font-family: var(--mono); font-size: 11px; padding: 3px 8px;
+  background: var(--accent); color: #000; border-radius: 3px;
+  font-weight: 600; letter-spacing: 0.5px;
+}
+.nav-brand .title { font-size: 14px; color: var(--text); }
+.nav-brand .sub { font-size: 13px; color: var(--text-mute); font-family: var(--kor); }
+.nav-links { display: flex; gap: 20px; }
+.nav-links a {
+  color: var(--text-mute); text-decoration: none; font-size: 13px;
+  padding: 4px 0; border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+}
+.nav-links a:hover { color: var(--text); border-color: var(--accent); }
+
+/* === HERO === */
+.hero {
+  max-width: 1280px; margin: 0 auto;
+  padding: 64px 32px 48px;
+}
+.eyebrow {
+  font-family: var(--mono); font-size: 12px; color: var(--accent);
+  text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 12px;
+}
+.hero h1 {
+  font-size: clamp(28px, 4vw, 44px); font-weight: 700; line-height: 1.15;
+  margin-bottom: 12px;
+}
+.hero h1 .accent { color: var(--accent); }
+.hero h1 .ko { font-family: var(--kor); display: block; font-size: 0.55em; color: var(--text-mute); margin-top: 6px; font-weight: 500; }
+.hero p.lede {
+  max-width: 880px; color: var(--text-mute); font-size: 16px;
+  margin-top: 16px;
+}
+.hero-stats {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;
+  margin-top: 36px;
+}
+.stat {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 16px 18px; border-radius: 8px;
+}
+.stat .num { font-size: 28px; font-weight: 700; color: var(--accent); font-family: var(--mono); }
+.stat .lbl { font-size: 12px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); }
+.stat .lbl-en { font-size: 11px; color: var(--text-dim); font-style: italic; margin-top: 2px; }
+
+/* === SECTION === */
+section { max-width: 1280px; margin: 0 auto; padding: 56px 32px 24px; }
+.section-head { margin-bottom: 28px; }
+.section-head h2 {
+  font-size: 22px; font-weight: 700; display: flex; align-items: baseline; gap: 12px;
+}
+.section-head h2 .num {
+  font-family: var(--mono); font-size: 13px; color: var(--accent);
+  background: rgba(245, 166, 35, 0.1); padding: 3px 8px; border-radius: 3px;
+  border: 1px solid rgba(245, 166, 35, 0.3);
+}
+.section-head h2 .ko { font-family: var(--kor); color: var(--text-mute); font-weight: 500; font-size: 16px; margin-left: 8px; }
+.section-head p { color: var(--text-mute); font-size: 14px; margin-top: 8px; max-width: 820px; }
+
+/* === BUSINESS PAIN ROW === */
+.pain-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+}
+.pain-card {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 18px; border-radius: 8px;
+  border-left: 3px solid var(--berry);
+}
+.pain-card .icon { font-size: 18px; margin-bottom: 8px; }
+.pain-card .pain {
+  font-family: var(--kor); font-size: 13px; color: var(--text);
+  font-weight: 500; margin-bottom: 6px;
+}
+.pain-card .addr {
+  font-size: 12px; color: var(--teal); line-height: 1.5;
+}
+
+/* === PERSONAS === */
+.personas {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+}
+.persona {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 18px; border-radius: 10px; cursor: pointer;
+  transition: all 0.18s ease; position: relative;
+}
+.persona:hover { border-color: var(--border-2); transform: translateY(-2px); }
+.persona.active { border-color: var(--accent); background: var(--surface-2); box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.12); }
+.persona .id {
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.persona .id .badge {
+  font-size: 10px; padding: 2px 6px; border-radius: 3px; font-weight: 600;
+}
+.persona[data-outcome="auto-approve"] .id .badge { background: rgba(74, 222, 128, 0.12); color: var(--green); border: 1px solid rgba(74,222,128,0.3); }
+.persona[data-outcome="review"] .id .badge { background: rgba(251, 191, 36, 0.12); color: var(--amber); border: 1px solid rgba(251,191,36,0.3); }
+.persona[data-outcome="hitl"] .id .badge { background: rgba(217, 72, 111, 0.12); color: var(--berry); border: 1px solid rgba(217,72,111,0.3); }
+.persona .name {
+  font-family: var(--kor); font-size: 16px; font-weight: 700;
+  margin: 10px 0 4px;
+}
+.persona .meta { font-size: 12px; color: var(--text-mute); }
+.persona .format {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between;
+}
+.persona .arrow {
+  position: absolute; bottom: -12px; left: 50%; transform: translateX(-50%);
+  width: 0; height: 0;
+  border-left: 8px solid transparent; border-right: 8px solid transparent;
+  border-top: 10px solid var(--accent);
+  opacity: 0; transition: opacity 0.18s;
+}
+.persona.active .arrow { opacity: 1; }
+
+/* === FLOW DIAGRAM === */
+.flow-wrap {
+  display: grid; grid-template-columns: 1fr 360px; gap: 24px;
+  margin-top: 16px;
+}
+.flow-diagram {
+  background: var(--bg-sub);
+  border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; overflow: auto;
+}
+.legend {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+  margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px dashed var(--border);
+}
+.legend-item { display: flex; align-items: center; gap: 6px; }
+.legend-dot { width: 10px; height: 10px; border-radius: 2px; }
+svg { display: block; width: 100%; height: auto; }
+
+.node {
+  fill: var(--surface-2); stroke: var(--border-2); stroke-width: 1.5;
+  cursor: pointer; transition: all 0.18s;
+}
+.node:hover { stroke: var(--text-mute); }
+.node.active { stroke: var(--accent); stroke-width: 2.5; fill: var(--surface-3); }
+.node.path { stroke: var(--accent); stroke-width: 2; }
+.node.path-skipped { opacity: 0.35; }
+
+.node-start { stroke: var(--accent); }
+.node-listen { stroke: var(--teal); }
+.node-router { stroke: var(--navy); }
+.node-hitl { stroke: var(--berry); }
+.node-end { stroke: var(--accent); }
+
+.node-label { font-family: var(--mono); font-size: 12px; fill: var(--text); pointer-events: none; font-weight: 500; }
+.node-sub { font-family: "Noto Sans KR", sans-serif; font-size: 10px; fill: var(--text-mute); pointer-events: none; }
+.node-tag { font-family: var(--mono); font-size: 9px; fill: var(--text-dim); pointer-events: none; }
+
+.edge { stroke: var(--border-2); stroke-width: 1.5; fill: none; }
+.edge-label { font-family: var(--mono); font-size: 10px; fill: var(--text-mute); }
+.edge.path { stroke: var(--accent); stroke-width: 2.5; }
+.edge.path-skipped { opacity: 0.25; }
+.edge-arrow { fill: var(--border-2); }
+.edge.path .edge-arrow, marker.path path { fill: var(--accent); }
+
+.pillar-tag {
+  font-family: var(--mono); font-size: 9px; fill: var(--accent);
+  pointer-events: none; font-weight: 600;
+}
+
+/* === STAGE DETAIL PANEL === */
+.detail {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 12px; padding: 20px; position: sticky; top: 80px;
+  align-self: start; max-height: calc(100vh - 100px); overflow-y: auto;
+}
+.detail .empty {
+  color: var(--text-mute); font-size: 13px; text-align: center; padding: 40px 12px;
+}
+.detail h3 {
+  font-family: var(--mono); font-size: 14px;
+  margin-bottom: 4px; display: flex; align-items: center; gap: 8px;
+}
+.detail h3 .tag {
+  font-size: 10px; padding: 2px 6px; border-radius: 3px;
+  background: var(--surface-3); color: var(--text-mute);
+}
+.detail .ko { font-family: var(--kor); font-size: 13px; color: var(--text-mute); margin-bottom: 14px; }
+.detail dl { display: grid; gap: 10px; }
+.detail dt { font-size: 11px; color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.detail dd { font-size: 13px; line-height: 1.55; color: var(--text); }
+.detail dd code {
+  font-family: var(--mono); font-size: 11px; background: var(--bg-sub);
+  padding: 2px 6px; border-radius: 3px; color: var(--teal);
+}
+.detail .pill {
+  display: inline-block; font-family: var(--mono); font-size: 10px;
+  padding: 3px 8px; border-radius: 3px; margin-right: 4px; margin-bottom: 4px;
+}
+.pill.start { background: rgba(245,166,35,0.12); color: var(--accent); border: 1px solid rgba(245,166,35,0.3); }
+.pill.listen { background: rgba(79,195,217,0.12); color: var(--teal); border: 1px solid rgba(79,195,217,0.3); }
+.pill.router { background: rgba(91,141,239,0.12); color: var(--navy); border: 1px solid rgba(91,141,239,0.3); }
+.pill.hitl { background: rgba(217,72,111,0.12); color: var(--berry); border: 1px solid rgba(217,72,111,0.3); }
+
+/* === AGENTS === */
+.agents { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.agent {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 20px; border-radius: 10px;
+  display: grid; grid-template-columns: 56px 1fr; gap: 16px;
+}
+.agent .avatar {
+  width: 56px; height: 56px; border-radius: 10px;
+  background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+  border: 1px solid var(--border-2);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 18px; font-weight: 700; color: var(--accent);
+}
+.agent .name { font-family: var(--mono); font-size: 13px; color: var(--text); }
+.agent .name-ko { font-family: var(--kor); font-size: 15px; font-weight: 600; margin-top: 2px; }
+.agent .role { font-size: 13px; color: var(--text-mute); margin-top: 6px; }
+.agent .llm {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  margin-top: 10px; padding: 4px 8px; background: var(--bg-sub); border-radius: 4px;
+  display: inline-block;
+}
+.agent .out {
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+  margin-top: 8px;
+}
+.agent .out span { color: var(--accent); }
+
+/* === TASK TIMELINE === */
+.tasks {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  position: relative;
+}
+.task {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 16px; border-radius: 8px; position: relative;
+}
+.task::after {
+  content: "→"; position: absolute; right: -14px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono); color: var(--accent); font-size: 18px; z-index: 2;
+}
+.task:last-child::after { display: none; }
+.task .num {
+  font-family: var(--mono); font-size: 10px; color: var(--accent);
+  background: rgba(245,166,35,0.1); padding: 2px 6px; border-radius: 3px;
+  display: inline-block;
+}
+.task .name { font-family: var(--mono); font-size: 13px; margin-top: 8px; }
+.task .agent-link { font-family: var(--kor); font-size: 11px; color: var(--text-mute); margin-top: 4px; }
+.task .out-type {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border);
+}
+.task .out-desc { font-size: 11px; color: var(--text-mute); margin-top: 4px; line-height: 1.45; }
+
+/* === HITL TRIGGERS === */
+.hitl-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.hitl-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-top: 3px solid var(--berry);
+  padding: 18px; border-radius: 8px;
+  transition: all 0.18s;
+}
+.hitl-card.fires { background: rgba(217,72,111,0.06); border-color: var(--berry); }
+.hitl-card .trig-num { font-family: var(--mono); font-size: 11px; color: var(--berry); }
+.hitl-card .trig {
+  font-family: var(--kor); font-size: 14px; font-weight: 600; margin: 8px 0;
+}
+.hitl-card .check {
+  font-family: var(--mono); font-size: 11px; color: var(--teal);
+  background: var(--bg-sub); padding: 6px 8px; border-radius: 4px; word-break: break-all;
+}
+.hitl-card .code-loc { font-family: var(--mono); font-size: 10px; color: var(--text-mute); margin-top: 8px; }
+.hitl-card .fires-tag {
+  display: none; font-family: var(--mono); font-size: 9px;
+  background: var(--berry); color: #fff; padding: 2px 6px; border-radius: 3px;
+  margin-top: 8px;
+}
+.hitl-card.fires .fires-tag { display: inline-block; }
+
+/* === FLOW JUSTIFICATION === */
+.reasons { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.reason {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 16px; border-radius: 8px;
+}
+.reason .ico { font-family: var(--mono); font-size: 11px; color: var(--accent); }
+.reason .why {
+  font-family: var(--kor); font-size: 13px; font-weight: 600;
+  margin: 8px 0 8px;
+}
+.reason .status {
+  font-size: 11px; color: var(--text-mute); line-height: 1.55;
+}
+.reason .status .tag {
+  display: inline-block; font-family: var(--mono); font-size: 9px;
+  background: var(--surface-3); padding: 2px 5px; border-radius: 2px;
+  color: var(--green); margin-right: 4px;
+}
+.reason .status .tag.up { color: var(--accent); }
+
+/* === GOVERNANCE PILLARS === */
+.pillars { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.pillar {
+  background: var(--surface); border: 1px solid var(--border);
+  padding: 18px 16px; border-radius: 8px; text-align: center;
+}
+.pillar .icon { font-size: 24px; margin-bottom: 8px; }
+.pillar .ko {
+  font-family: var(--kor); font-size: 18px; font-weight: 700; color: var(--accent);
+}
+.pillar .en {
+  font-family: var(--mono); font-size: 11px; color: var(--text-mute);
+  margin-top: 4px;
+}
+.pillar .where {
+  font-size: 11px; color: var(--text); margin-top: 10px;
+  padding-top: 10px; border-top: 1px solid var(--border); line-height: 1.45;
+}
+
+/* === DEMO VS PRODUCTION TABLE === */
+.gap-table {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; overflow: hidden;
+}
+.gap-row {
+  display: grid; grid-template-columns: 1fr 60px 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.gap-row:last-child { border-bottom: none; }
+.gap-row.header {
+  background: var(--surface-2);
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-mute); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.gap-row > div { padding: 14px 18px; font-size: 13px; }
+.gap-row .demo { color: var(--amber); border-right: 1px dashed var(--border); }
+.gap-row .arrow {
+  text-align: center; color: var(--accent); font-family: var(--mono); font-size: 16px;
+  border-right: 1px dashed var(--border); display: flex; align-items: center; justify-content: center;
+}
+.gap-row .prod { color: var(--green); }
+.gap-row.header .demo, .gap-row.header .prod { color: var(--text-mute); }
+
+/* === FOOTER === */
+footer {
+  max-width: 1280px; margin: 80px auto 0; padding: 32px;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-dim); text-align: center;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 1100px) {
+  .flow-wrap { grid-template-columns: 1fr; }
+  .detail { position: relative; top: 0; max-height: none; }
+  .agents { grid-template-columns: 1fr; }
+  .hitl-grid, .reasons, .pillars { grid-template-columns: repeat(2, 1fr); }
+  .pain-grid, .personas { grid-template-columns: repeat(2, 1fr); }
+  .hero-stats { grid-template-columns: repeat(2, 1fr); }
+  .tasks { grid-template-columns: 1fr; }
+  .task::after { content: "↓"; right: 50%; top: auto; bottom: -16px; transform: translateX(50%); }
+}
+</style>
+</head>
+<body>
+
+<!-- ===== NAV ===== -->
+<div class="nav">
+  <div class="nav-brand">
+    <span class="badge">CLI DEMO</span>
+    <span class="title">loan_application_triage</span>
+    <span class="sub">대출 신청 분류 자동화</span>
+  </div>
+  <div class="nav-links">
+    <a href="#scenario">Scenario</a>
+    <a href="#personas">Samples</a>
+    <a href="#flow">Flow</a>
+    <a href="#agents">Agents</a>
+    <a href="#tasks">Tasks</a>
+    <a href="#hitl">HITL</a>
+    <a href="#guardrails">Guardrails</a>
+    <a href="#tool-rbac">Tool RBAC</a>
+    <a href="#why">Why Flow</a>
+    <a href="#governance">Pillars</a>
+    <a href="#gaps">Gaps</a>
+  </div>
+</div>
+
+<!-- ===== HERO ===== -->
+<div class="hero">
+  <div class="eyebrow">CrewAI · Multi-Agent Flow Architecture</div>
+  <h1>
+    Loan Application <span class="accent">Triage</span> Automation
+    <span class="ko">한국 시중은행을 위한 대출 신청 분류 — 4-에이전트 크루 × Flow 오케스트레이션 × HITL</span>
+  </h1>
+  <p class="lede">
+    Korean commercial bank loan triage. Mixed-format intake (PDF · HWP · scanned PNG · DOCX) flowing through
+    SSO/JWT, OTel observability, PII scanning, eval-based LLM routing, a 4-agent crew, hallucination gating,
+    and HITL approval — all wired into a single <code class="mono" style="color: var(--accent);">@start / @listen / @router</code> Flow.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat">
+      <div class="num">4</div>
+      <div class="lbl">에이전트</div>
+      <div class="lbl-en">Agents in crew</div>
+    </div>
+    <div class="stat">
+      <div class="num">7+4</div>
+      <div class="lbl">Flow 단계 · Crew 태스크</div>
+      <div class="lbl-en">Flow stages · Crew tasks</div>
+    </div>
+    <div class="stat">
+      <div class="num">4</div>
+      <div class="lbl">HITL 트리거</div>
+      <div class="lbl-en">HITL triggers (any one fires)</div>
+    </div>
+    <div class="stat">
+      <div class="num">5</div>
+      <div class="lbl">거버넌스 기둥</div>
+      <div class="lbl-en">Governance pillars</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== BUSINESS SCENARIO ===== -->
+<section id="scenario">
+  <div class="section-head">
+    <h2><span class="num">01</span> Business Scenario <span class="ko">비즈니스 시나리오</span></h2>
+    <p>A Korean commercial bank's loan operations team processes incoming applications across mixed formats and channels.
+       Each one must clear document intake → KYC/AML compliance → credit risk scoring → 결재 의견 (FSS-aligned approval recommendation).
+       Below: four pain points specific to Korean financial services, and how this demo addresses each.</p>
+  </div>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="icon">📄</div>
+      <div class="pain">HWP 파일 처리</div>
+      <div style="font-size: 11px; color: var(--text-mute); font-style: italic; margin-bottom: 8px;">Korean-only office format banks must handle</div>
+      <div class="addr">→ Format dispatcher with OLE detection</div>
+    </div>
+    <div class="pain-card">
+      <div class="icon">🌐</div>
+      <div class="pain">한국어 Tool-Calling 약점</div>
+      <div style="font-size: 11px; color: var(--text-mute); font-style: italic; margin-bottom: 8px;">HyperClova X — strong NLU, weak on English JSON schemas (Article 19, SDS measurement)</div>
+      <div class="addr">→ Eval-based LLM routing across GPT-4o / Claude Sonnet 4.5 / HyperClova X</div>
+    </div>
+    <div class="pain-card">
+      <div class="icon">📋</div>
+      <div class="pain">금감원 (FSS) 감사 추적</div>
+      <div style="font-size: 11px; color: var(--text-mute); font-style: italic; margin-bottom: 8px;">FSS compliance + auditability requirements</div>
+      <div class="addr">→ 5-Pillar governance wired into Flow stages with OTel spans</div>
+    </div>
+    <div class="pain-card">
+      <div class="icon">👤</div>
+      <div class="pain">고위험 건 사람 결재 필수</div>
+      <div style="font-size: 11px; color: var(--text-mute); font-style: italic; margin-bottom: 8px;">Regulatory requirement, not optional</div>
+      <div class="addr">→ HITL routes by entity + amount with SLA to 위험관리역 / 본부장 / 심사역</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== PERSONAS / SAMPLES ===== -->
+<section id="personas">
+  <div class="section-head">
+    <h2><span class="num">02</span> Sample Applications <span class="ko">데모 신청서 4종</span></h2>
+    <p>Click a sample to highlight its expected path through the Flow below. Each sample exercises a different combination of
+       format handling, risk scoring, and HITL triggering.</p>
+  </div>
+  <div class="personas">
+    <div class="persona" data-sample="1" data-outcome="auto-approve" data-path="auto">
+      <div class="id">
+        <span>SAMPLE_01</span>
+        <span class="badge">AUTO-APPROVE</span>
+      </div>
+      <div class="name">한라테크</div>
+      <div class="meta">Corporate · 50억 KRW · AA-</div>
+      <div class="format"><span>PDF</span><span>Low risk</span></div>
+      <div class="arrow"></div>
+    </div>
+    <div class="persona" data-sample="2" data-outcome="review" data-path="review">
+      <div class="id">
+        <span>SAMPLE_02</span>
+        <span class="badge">REVIEW</span>
+      </div>
+      <div class="name">동백제조</div>
+      <div class="meta">SME · 1억 KRW · BB</div>
+      <div class="format"><span>HWP</span><span>Mid risk · 90s demo</span></div>
+      <div class="arrow"></div>
+    </div>
+    <div class="persona" data-sample="3" data-outcome="hitl" data-path="hitl">
+      <div class="id">
+        <span>SAMPLE_03</span>
+        <span class="badge">HITL FIRES</span>
+      </div>
+      <div class="name">Individual</div>
+      <div class="meta">소비자 · 5천만 KRW · 540점</div>
+      <div class="format"><span>Scanned PNG</span><span>High risk</span></div>
+      <div class="arrow"></div>
+    </div>
+    <div class="persona" data-sample="4" data-outcome="review" data-path="review">
+      <div class="id">
+        <span>SAMPLE_04</span>
+        <span class="badge">REVIEW</span>
+      </div>
+      <div class="name">동백제조 (Partner)</div>
+      <div class="meta">SME via partner channel</div>
+      <div class="format"><span>DOCX</span><span>Mid risk</span></div>
+      <div class="arrow"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== FLOW DIAGRAM ===== -->
+<section id="flow">
+  <div class="section-head">
+    <h2><span class="num">03</span> Flow Topology <span class="ko">Flow 토폴로지</span></h2>
+    <p>Interactive diagram of <code class="mono" style="color:var(--teal);">LoanApplicationTriageFlow</code>
+       (<code class="mono" style="color:var(--teal);">src/loan_application_triage/main.py:121</code>).
+       Click any stage to inspect it on the right. Selecting a sample above highlights the path that sample takes.</p>
+  </div>
+
+  <div class="flow-wrap">
+    <div class="flow-diagram">
+      <div class="legend">
+        <div class="legend-item"><span class="legend-dot" style="background: var(--accent);"></span><code>@start / emit_final</code></div>
+        <div class="legend-item"><span class="legend-dot" style="background: var(--teal);"></span><code>@listen</code></div>
+        <div class="legend-item"><span class="legend-dot" style="background: var(--navy);"></span><code>@router</code></div>
+        <div class="legend-item"><span class="legend-dot" style="background: var(--berry);"></span><code>HITL branch</code></div>
+        <div class="legend-item"><span style="color: var(--accent); font-weight: 700;">━━</span> Selected sample's path</div>
+      </div>
+
+      <svg id="flow-svg" viewBox="0 0 760 1080" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="#3a4259"/>
+          </marker>
+          <marker id="arrow-path" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse" class="path">
+            <path d="M0,0 L10,5 L0,10 z" fill="#F5A623"/>
+          </marker>
+        </defs>
+
+        <!-- BEGIN -->
+        <g class="node-group" data-stage="begin">
+          <rect class="node node-start" x="180" y="20" width="400" height="60" rx="8" />
+          <text class="node-label" x="380" y="44" text-anchor="middle">@start · begin</text>
+          <text class="node-sub" x="380" y="62" text-anchor="middle">SSO/JWT · OTel init · sample select · audit log</text>
+        </g>
+        <text class="pillar-tag" x="595" y="55">권한 · 로깅</text>
+
+        <!-- arrow 1 -->
+        <line class="edge" data-edge="begin-llm" x1="380" y1="80" x2="380" y2="120" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="395" y="105">@listen</text>
+
+        <!-- SELECT RISK LLM -->
+        <g class="node-group" data-stage="select_risk_llm">
+          <rect class="node node-listen" x="220" y="120" width="320" height="60" rx="8" />
+          <text class="node-label" x="380" y="146" text-anchor="middle">select_risk_llm</text>
+          <text class="node-sub" x="380" y="164" text-anchor="middle">eval-driven router · risk LLM decision</text>
+        </g>
+        <text class="pillar-tag" x="555" y="155">개선</text>
+
+        <!-- arrow 2 -->
+        <line class="edge" data-edge="llm-pii" x1="380" y1="180" x2="380" y2="220" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="395" y="205">@listen</text>
+
+        <!-- PII SCAN -->
+        <g class="node-group" data-stage="input_pii_scan">
+          <rect class="node node-listen" x="220" y="220" width="320" height="60" rx="8" />
+          <text class="node-label" x="380" y="246" text-anchor="middle">input_pii_scan</text>
+          <text class="node-sub" x="380" y="264" text-anchor="middle">Layer 1 · PII mask before LLM</text>
+        </g>
+        <text class="pillar-tag" x="555" y="255">검증</text>
+
+        <!-- arrow 3 -->
+        <line class="edge" data-edge="pii-crew" x1="380" y1="280" x2="380" y2="320" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="395" y="305">@listen</text>
+
+        <!-- RUN TRIAGE CREW -->
+        <g class="node-group" data-stage="run_triage_crew">
+          <rect class="node node-listen" x="160" y="320" width="440" height="120" rx="8" />
+          <text class="node-label" x="380" y="350" text-anchor="middle">run_triage_crew</text>
+          <text class="node-sub" x="380" y="372" text-anchor="middle">intake → kyc → risk → supervisor (sequential)</text>
+          <text class="node-tag" x="380" y="390" text-anchor="middle">Layer 3 hallucination gate · 4 Pydantic outputs</text>
+          <!-- mini agent chips -->
+          <rect x="186" y="402" width="84" height="26" rx="4" fill="#0e1322" stroke="#3a4259" />
+          <text class="node-tag" x="228" y="419" text-anchor="middle" style="fill: #4FC3D9;">intake</text>
+          <rect x="278" y="402" width="84" height="26" rx="4" fill="#0e1322" stroke="#3a4259" />
+          <text class="node-tag" x="320" y="419" text-anchor="middle" style="fill: #4FC3D9;">kyc</text>
+          <rect x="370" y="402" width="84" height="26" rx="4" fill="#0e1322" stroke="#3a4259" />
+          <text class="node-tag" x="412" y="419" text-anchor="middle" style="fill: #4FC3D9;">risk</text>
+          <rect x="462" y="402" width="108" height="26" rx="4" fill="#0e1322" stroke="#3a4259" />
+          <text class="node-tag" x="516" y="419" text-anchor="middle" style="fill: #F5A623;">supervisor</text>
+        </g>
+        <text class="pillar-tag" x="615" y="355">데이터 · 정책</text>
+
+        <!-- arrow 4 -->
+        <line class="edge" data-edge="crew-gate" x1="380" y1="440" x2="380" y2="490" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="395" y="475">@router</text>
+
+        <!-- HITL GATE (router) -->
+        <g class="node-group" data-stage="hitl_gate">
+          <rect class="node node-router" x="260" y="490" width="240" height="64" rx="32" />
+          <text class="node-label" x="380" y="518" text-anchor="middle">hitl_gate</text>
+          <text class="node-sub" x="380" y="538" text-anchor="middle">router decision</text>
+        </g>
+
+        <!-- branch arrows -->
+        <path class="edge" data-edge="gate-hitl" d="M 320 554 L 220 620 L 160 660" fill="none" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="170" y="600">"needs_hitl"</text>
+
+        <path class="edge" data-edge="gate-auto" d="M 440 554 L 540 620 L 600 660" fill="none" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="530" y="600">"auto_approve"</text>
+
+        <!-- HITL BRANCH -->
+        <g class="node-group" data-stage="route_for_human_review">
+          <rect class="node node-hitl" x="20" y="660" width="280" height="120" rx="8" />
+          <text class="node-label" x="160" y="688" text-anchor="middle">route_for_human_review</text>
+          <text class="node-sub" x="160" y="708" text-anchor="middle">HITL queue · webhook · HMAC token</text>
+          <text class="node-tag" x="160" y="728" text-anchor="middle">wait_for_verdict() · 300s SLA</text>
+          <text class="node-tag" x="160" y="746" text-anchor="middle">routes by entity + amount:</text>
+          <text class="node-tag" x="160" y="762" text-anchor="middle" style="font-family: 'Noto Sans KR', sans-serif;">소매여신 위험관리역 · 기업금융본부장 · 여신심사역</text>
+        </g>
+        <text class="pillar-tag" x="220" y="685">권한</text>
+
+        <!-- AUTO BRANCH -->
+        <g class="node-group" data-stage="apply_auto_decision">
+          <rect class="node node-listen" x="460" y="660" width="280" height="120" rx="8" />
+          <text class="node-label" x="600" y="688" text-anchor="middle">apply_auto_decision</text>
+          <text class="node-sub" x="600" y="708" text-anchor="middle">approve / reject / pending_review</text>
+          <text class="node-tag" x="600" y="730" text-anchor="middle">supervisor verdict applied</text>
+          <text class="node-tag" x="600" y="748" text-anchor="middle">no human in loop on this path</text>
+        </g>
+        <text class="pillar-tag" x="660" y="685">정책</text>
+
+        <!-- merge arrows -->
+        <path class="edge" data-edge="hitl-final" d="M 160 780 L 160 850 L 380 900" fill="none" marker-end="url(#arrow)"/>
+        <path class="edge" data-edge="auto-final" d="M 600 780 L 600 850 L 380 900" fill="none" marker-end="url(#arrow)"/>
+        <text class="edge-label" x="280" y="865">@listen(or_(...))</text>
+
+        <!-- EMIT FINAL -->
+        <g class="node-group" data-stage="emit_final">
+          <rect class="node node-end" x="220" y="900" width="320" height="70" rx="8" />
+          <text class="node-label" x="380" y="930" text-anchor="middle">emit_final</text>
+          <text class="node-sub" x="380" y="952" text-anchor="middle">output/*.json · audit trail</text>
+        </g>
+        <text class="pillar-tag" x="555" y="940">로깅</text>
+
+        <!-- HITL trigger callout -->
+        <g transform="translate(20, 1000)">
+          <rect width="720" height="70" rx="8" fill="#0e1322" stroke="#2a3142" stroke-dasharray="4,4" />
+          <text x="20" y="24" class="node-tag" style="fill: var(--berry); font-weight: 600;">needs_hitl fires if ANY of:</text>
+          <text x="20" y="44" class="node-tag" style="fill: var(--text-mute);">  • risk.risk_score &gt; 0.7 (HITL_RISK_THRESHOLD)    • kyc.sanctions_hit == true</text>
+          <text x="20" y="62" class="node-tag" style="fill: var(--text-mute);">  • Any field confidence &lt; 0.6 (low_confidence_fields)    • Parse failure (risk/kyc output missing)</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- DETAIL PANEL -->
+    <div class="detail" id="detail-panel">
+      <div class="empty">
+        <div style="font-size: 28px; margin-bottom: 12px;">◉</div>
+        <div>Click a stage or sample to inspect.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== AGENTS ===== -->
+<section id="agents">
+  <div class="section-head">
+    <h2><span class="num">04</span> Agents <span class="ko">에이전트 4명</span></h2>
+    <p>Defined in <code class="mono" style="color:var(--teal);">crews/triage_crew/config/agents.yaml</code>. Each agent has a scoped role, a chosen LLM, and a Pydantic output model.</p>
+  </div>
+  <div class="agents">
+    <div class="agent">
+      <div class="avatar">★</div>
+      <div>
+        <div class="name">loan_triage_supervisor</div>
+        <div class="name-ko">대출 분류 슈퍼바이저</div>
+        <div class="role">Synthesizes results from all sub-agents · decides approve / review / reject · routes to HITL if risk &gt; 0.7 or sanctions hit.</div>
+        <div class="llm">LLM: openai/gpt-4o</div>
+        <div class="out">Output: <span>Korean Markdown approval report</span></div>
+      </div>
+    </div>
+    <div class="agent">
+      <div class="avatar">1</div>
+      <div>
+        <div class="name">intake_agent</div>
+        <div class="name-ko">문서 인테이크 분석가</div>
+        <div class="role">Extracts applicant info from messy real-world docs (PDF / HWP / scanned PNG / DOCX) with per-field confidence scores.</div>
+        <div class="llm">LLM: openai/gpt-4o</div>
+        <div class="out">Output: <span>ApplicantProfile</span> (Pydantic)</div>
+      </div>
+    </div>
+    <div class="agent">
+      <div class="avatar">2</div>
+      <div>
+        <div class="name">kyc_verifier</div>
+        <div class="name-ko">KYC 검증 분석가</div>
+        <div class="role">Identity verification · sanctions matching (OFAC / UN / KoFIU) · PEP checks against 특정금융정보법.</div>
+        <div class="llm">LLM: anthropic/claude-sonnet-4-5</div>
+        <div class="out">Output: <span>KYCReport</span> (Pydantic)</div>
+      </div>
+    </div>
+    <div class="agent">
+      <div class="avatar">3</div>
+      <div>
+        <div class="name">risk_classifier</div>
+        <div class="name-ko">신용 위험 분석가</div>
+        <div class="role">KCB / NICE-style scoring with Korean industry default rates · risk score 0.0–1.0 · 한글 rationale.</div>
+        <div class="llm">LLM: dynamic · llm_routing.get_risk_llm()</div>
+        <div class="out">Output: <span>RiskDecision</span> (Pydantic)</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== TASKS ===== -->
+<section id="tasks">
+  <div class="section-head">
+    <h2><span class="num">05</span> Tasks <span class="ko">크루 내부 4개 태스크 (sequential)</span></h2>
+    <p>Defined in <code class="mono" style="color:var(--teal);">crews/triage_crew/config/tasks.yaml</code> — run sequentially inside the Flow's <code class="mono" style="color:var(--teal);">run_triage_crew</code> stage. The Flow itself adds 7 more orchestration steps around them.</p>
+  </div>
+  <div class="tasks">
+    <div class="task">
+      <span class="num">TASK 01</span>
+      <div class="name">intake_task</div>
+      <div class="agent-link">→ intake_agent · 문서 인테이크 분석가</div>
+      <div class="out-type">ApplicantProfile</div>
+      <div class="out-desc">Legal name, entity type, amount, purpose, credit grade + per-field confidences.</div>
+    </div>
+    <div class="task">
+      <span class="num">TASK 02</span>
+      <div class="name">kyc_task</div>
+      <div class="agent-link">→ kyc_verifier · KYC 검증 분석가</div>
+      <div class="out-type">KYCReport</div>
+      <div class="out-desc">Identity · sanctions / PEP hits · risk flags.</div>
+    </div>
+    <div class="task">
+      <span class="num">TASK 03</span>
+      <div class="name">risk_task</div>
+      <div class="agent-link">→ risk_classifier · 신용 위험 분석가</div>
+      <div class="out-type">RiskDecision</div>
+      <div class="out-desc">risk_score (0.0–1.0) · decision · rationale_ko · model_used.</div>
+    </div>
+    <div class="task">
+      <span class="num">TASK 04</span>
+      <div class="name">supervisor_task</div>
+      <div class="agent-link">→ loan_triage_supervisor · 슈퍼바이저</div>
+      <div class="out-type">Korean Markdown 결재 의견</div>
+      <div class="out-desc">Synthesized approval report with HITL routing recommendation.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== HITL ===== -->
+<section id="hitl">
+  <div class="section-head">
+    <h2><span class="num">06</span> HITL Triggers <span class="ko">사람 결재가 발동하는 4가지 조건</span></h2>
+    <p>HITL is not only the risk threshold. Any one of the four below routes the application to <code class="mono" style="color:var(--berry);">route_for_human_review</code>. The selected sample's firing triggers are highlighted.</p>
+  </div>
+  <div class="hitl-grid">
+    <div class="hitl-card" data-fires-on="hitl">
+      <span class="trig-num">TRIGGER 01</span>
+      <div class="trig">고위험 점수 / High risk score</div>
+      <div class="check">risk.risk_score &gt; 0.7</div>
+      <div class="code-loc">→ hitl.py:31</div>
+      <span class="fires-tag">FIRES on this sample</span>
+    </div>
+    <div class="hitl-card" data-fires-on="never-demo">
+      <span class="trig-num">TRIGGER 02</span>
+      <div class="trig">제재 대상 일치 / Sanctions match</div>
+      <div class="check">kyc.sanctions_hit == true</div>
+      <div class="code-loc">→ hitl.py:31</div>
+      <span class="fires-tag">FIRES on this sample</span>
+    </div>
+    <div class="hitl-card" data-fires-on="hitl">
+      <span class="trig-num">TRIGGER 03</span>
+      <div class="trig">필드 신뢰도 부족 / Low extraction confidence</div>
+      <div class="check">any field confidence &lt; 0.6</div>
+      <div class="code-loc">→ main.py:259</div>
+      <span class="fires-tag">FIRES on this sample</span>
+    </div>
+    <div class="hitl-card" data-fires-on="never-demo">
+      <span class="trig-num">TRIGGER 04</span>
+      <div class="trig">크루 출력 파싱 실패 / Output parse failure</div>
+      <div class="check">risk is None || kyc is None</div>
+      <div class="code-loc">→ main.py:256 (safe fallback)</div>
+      <span class="fires-tag">FIRES on this sample</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===== GUARDRAILS — 4 LAYERS (actual wiring) ===== -->
+<section id="guardrails">
+  <div class="section-head">
+    <h2><span class="num">07</span> Guardrails — 4 Layers Wired <span class="ko">가드레일 4계층 — 실제 구현 방식</span></h2>
+    <p>All four layers exist in the codebase, but not via a uniform decorator API. Three use manual hooks placed at the right Flow stage; one uses CrewAI's official <code class="mono" style="color:var(--teal);">Task(guardrail=...)</code> parameter. Each layer emits a distinct OTel event family.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;">
+    <!-- L1 -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--accent);">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--accent); letter-spacing: 0.5px;">LAYER 1 · INPUT PII</span>
+        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">main.py:233</span>
+      </div>
+      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">입력 PII 스캔</div>
+      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Scans <code>document_path</code> text and masks regulated identifiers before any LLM ever sees them.</div>
+      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">scan_and_mask_input(document_path)</div>
+      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
+        <span style="background: rgba(245,166,35,0.12); color: var(--accent); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(245,166,35,0.3);">manual hook</span>
+        <span style="color: var(--text-mute); align-self: center;">in <code>@listen</code> input_pii_scan</span>
+      </div>
+      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l1_input_pii.*</div>
+    </div>
+
+    <!-- L2 -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--teal);">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--teal); letter-spacing: 0.5px;">LAYER 2 · TOOL RBAC</span>
+        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">triage_crew.py:29</span>
+      </div>
+      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">도구 단위 RBAC</div>
+      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Wraps every tool's <code>_run</code> with a persona allow-list check — the shared-agent RBAC mechanism for this project.</div>
+      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">wrap_tools_with_rbac([...])</div>
+      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
+        <span style="background: rgba(79,195,217,0.12); color: var(--teal); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(79,195,217,0.3);">tool wrap</span>
+        <span style="color: var(--text-mute); align-self: center;">at crew construction</span>
+      </div>
+      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l2_tool_rbac.*</div>
+    </div>
+
+    <!-- L3 -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--amber);">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--amber); letter-spacing: 0.5px;">LAYER 3 · HALLUCINATION</span>
+        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">main.py:285</span>
+      </div>
+      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">환각 검증</div>
+      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Scores each sub-agent output (intake / kyc / risk) for hallucination and gates the run. Aggregated post-kickoff.</div>
+      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">score_hallucination() + hallucination_gate()</div>
+      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
+        <span style="background: rgba(251,191,36,0.12); color: var(--amber); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(251,191,36,0.3);">manual hook</span>
+        <span style="color: var(--text-mute); align-self: center;">post-<code>crew().kickoff()</code></span>
+      </div>
+      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l3_hallucination.*</div>
+    </div>
+
+    <!-- L4 -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; border-left: 4px solid var(--green);">
+      <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px;">
+        <span style="font-family: var(--mono); font-size: 12px; font-weight: 700; color: var(--green); letter-spacing: 0.5px;">LAYER 4 · OUTPUT POLICY</span>
+        <span style="font-family: var(--mono); font-size: 10px; color: var(--text-mute);">triage_crew.py:101 · 110 · 119 · 127</span>
+      </div>
+      <div style="font-family: var(--kor); font-size: 14px; font-weight: 600; margin-bottom: 6px;">출력 정책 (RRN · 전화 · 계좌 · 통화)</div>
+      <div style="font-size: 12px; color: var(--text-mute); font-style: italic; margin-bottom: 12px; line-height: 1.55;">Regex checks for resident registration numbers, phone numbers, account numbers, and non-KRW currency in every task's final output.</div>
+      <div style="background: var(--bg-sub); padding: 8px 10px; border-radius: 4px; font-family: var(--mono); font-size: 11px; color: var(--text); margin-bottom: 8px;">Task(guardrail=policy_guardrail, ...)</div>
+      <div style="display: flex; gap: 8px; font-family: var(--mono); font-size: 10px;">
+        <span style="background: rgba(74,222,128,0.12); color: var(--green); padding: 3px 8px; border-radius: 3px; border: 1px solid rgba(74,222,128,0.3);">canonical API</span>
+        <span style="color: var(--text-mute); align-self: center;">CrewAI auto-retries on False</span>
+      </div>
+      <div style="font-family: var(--mono); font-size: 10.5px; color: var(--teal); margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);">OTel: guardrail.l4_output_policy.*</div>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; font-size: 12px; line-height: 1.6;">
+    <strong style="color: var(--text);">Wiring note.</strong>
+    <span style="color: var(--text-mute);">CrewAI's canonical surface for guardrails is <code class="mono" style="color: var(--teal);">Task(guardrail=fn)</code> (auto-retry on False), <code class="mono" style="color: var(--teal);">@before_tool_call</code> / <code class="mono" style="color: var(--teal);">@after_tool_call</code>, and <code class="mono" style="color: var(--teal);">@before_llm_call</code> / <code class="mono" style="color: var(--teal);">@after_llm_call</code> from <code class="mono" style="color: var(--teal);">crewai.hooks</code>. Only L4 uses the canonical API today; L1–L3 use manual hooks placed at the right Flow stage. Migration to the canonical hooks is on the post-PoC roadmap.</span>
+  </div>
+</section>
+
+<!-- ===== TOOL-LAYER RBAC ===== -->
+<section id="tool-rbac">
+  <div class="section-head">
+    <h2><span class="num">08</span> Shared Agent · Tool-Layer RBAC <span class="ko">공통 Agent · 도구 단위 권한</span></h2>
+    <p>The same agent definition is shared across operators. RBAC is enforced at the tool layer — <code class="mono" style="color:var(--teal);">wrap_tools_with_rbac()</code> wraps every tool's <code class="mono" style="color:var(--teal);">_run</code> with a persona allow-list check at crew construction time. One agent definition, per-call permission context.</p>
+  </div>
+
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+    <!-- left: mechanism -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;">
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 10px;">MECHANISM · 메커니즘</div>
+      <div style="font-size: 14px; font-weight: 600; margin-bottom: 14px;">One definition, persona-scoped tool whitelist</div>
+      <pre style="background: #060a14; padding: 14px; border-radius: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--teal); overflow-x: auto; line-height: 1.6; border: 1px solid var(--border); margin-bottom: 14px;"><span style="color: #F5A623;">from</span> .governance.rbac <span style="color: #F5A623;">import</span> wrap_tools_with_rbac
+
+<span style="color: #6a7287; font-style: italic;"># at crew construction (triage_crew.py:29)</span>
+tools = wrap_tools_with_rbac([
+    ocr_tool, kyc_lookup, credit_score, sanctions_check,
+])
+
+<span style="color: #6a7287; font-style: italic"># wrap_tools_with_rbac patches each tool's _run</span>
+<span style="color: #6a7287; font-style: italic"># to check active persona against tool whitelist;</span>
+<span style="color: #6a7287; font-style: italic"># denied calls return early and emit OTel event.</span></pre>
+      <div style="font-size: 12px; color: var(--text-mute); line-height: 1.6;">
+        Active persona is read from the operator's JWT (or <code>DEMO_OPERATOR_ROLE</code> env var in the demo). The wrap happens once at crew construction; per-call enforcement is automatic for every <code>_run</code> invocation thereafter.
+      </div>
+    </div>
+
+    <!-- right: properties -->
+    <div style="background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 22px;">
+      <div style="font-family: var(--mono); font-size: 11px; color: var(--accent); letter-spacing: 0.5px; margin-bottom: 10px;">PROPERTIES · 속성</div>
+      <ul style="list-style: none; padding: 0; margin: 0;">
+        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
+          <div style="font-size: 13px; font-weight: 600;">No per-user agent re-instantiation</div>
+          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">사용자마다 에이전트를 새로 만들지 않음 — 정의는 하나</div>
+        </li>
+        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
+          <div style="font-size: 13px; font-weight: 600;">Tool-call denial is RBAC's main enforcement point</div>
+          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">권한 분리의 핵심은 도구 호출 단계의 차단</div>
+        </li>
+        <li style="padding: 10px 0; border-bottom: 1px dashed var(--border);">
+          <div style="font-size: 13px; font-weight: 600;">Each denied call emits a distinct OTel event</div>
+          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--mono);">guardrail.l2_tool_rbac.deny</div>
+        </li>
+        <li style="padding: 10px 0;">
+          <div style="font-size: 13px; font-weight: 600;">Defined in <code style="font-size: 11px;">governance/rbac.py</code></div>
+          <div style="font-size: 11.5px; color: var(--text-mute); margin-top: 4px; font-family: var(--kor); font-style: italic;">페르소나 정의 + 도구 화이트리스트가 한 파일에</div>
+        </li>
+      </ul>
+    </div>
+  </div>
+
+  <div style="margin-top: 20px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--berry); border-radius: 8px; font-size: 12px; line-height: 1.6;">
+    <strong style="color: var(--text);">Refactor candidate.</strong>
+    <span style="color: var(--text-mute);">Tool-wrapping monkey-patches <code class="mono" style="color: var(--teal);">_run</code>, which is fragile against CrewAI internal changes. Canonical refactor: replace with <code class="mono" style="color: var(--teal);">@before_tool_call</code> hook reading <code class="mono" style="color: var(--teal);">context.tool_name</code> + active persona, returning <code class="mono" style="color: var(--teal);">False</code> to block. Same OTel event semantics, stable across CrewAI versions.</span>
+  </div>
+</section>
+
+<!-- ===== WHY FLOW ===== -->
+<section id="why">
+  <div class="section-head">
+    <h2><span class="num">09</span> Why a Flow (and not just a Crew) <span class="ko">왜 Flow가 필요한가</span></h2>
+    <p>Five reasons the Flow wrapper is justified — and what changed after the email-approval wiring went in.</p>
+  </div>
+  <div class="reasons">
+    <div class="reason">
+      <div class="ico">REASON 01</div>
+      <div class="why">조건 분기 / Conditional branching</div>
+      <div class="status"><span class="tag">UNCHANGED</span> @router hitl_gate remains the only branch point — HITL vs auto.</div>
+    </div>
+    <div class="reason">
+      <div class="ico">REASON 02</div>
+      <div class="why">크루 외부 단계 / Pre/post-crew steps</div>
+      <div class="status"><span class="tag">UNCHANGED</span> SSO/JWT, OTel, LLM routing eval, PII scan, hallucination gating, serialization all belong outside the Crew.</div>
+    </div>
+    <div class="reason">
+      <div class="ico">REASON 03</div>
+      <div class="why">단계별 타입 상태 / Typed state across stages</div>
+      <div class="status"><span class="tag up">STRENGTHENED</span> TriageState now carries reviewer_verdict + decided_at between email send and emit_final.</div>
+    </div>
+    <div class="reason">
+      <div class="ico">REASON 04</div>
+      <div class="why">사람 결재 일시정지·재개 / Pause-and-resume for human review</div>
+      <div class="status"><span class="tag up">UPGRADED</span> route_for_human_review now blocks on wait_for_verdict() for 300s; webhook + HMAC token + verdict-file injection all in one Flow stage.</div>
+    </div>
+    <div class="reason">
+      <div class="ico">REASON 05</div>
+      <div class="why">단계별 옵저버빌리티 / Observability per stage</div>
+      <div class="status"><span class="tag">UNCHANGED</span> Each @listen gets its own span/trace event; email/webhook activity logged under route_for_human_review's span.</div>
+    </div>
+  </div>
+  <p style="margin-top: 20px; font-size: 12px; color: var(--text-mute); padding: 14px 18px; background: var(--surface); border-radius: 8px; border-left: 3px solid var(--accent);">
+    <strong style="color: var(--text);">Nuance on stage 4:</strong> Today's setup is <em>in-process</em> pause/resume — the Flow blocks; the webhook runs in a daemon thread of the same Python process.
+    True cross-process pause/resume would need Flow persistence (<code class="mono" style="color:var(--accent);">@persist</code> or <code class="mono" style="color:var(--accent);">flow.kickoff_async()</code> with a state store).
+    For a 90-second demo, in-process is exactly right; for production, swap to persisted-state resume but keep the same Flow shape.
+  </p>
+</section>
+
+<!-- ===== GOVERNANCE PILLARS ===== -->
+<section id="governance">
+  <div class="section-head">
+    <h2><span class="num">10</span> 5-Pillar Governance Map <span class="ko">5기둥 거버넌스 매핑</span></h2>
+    <p>The SDS AI Harness Framework pillars, wired directly into Flow stages with OTel spans for FSS auditability.</p>
+  </div>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="icon">📊</div>
+      <div class="ko">데이터</div>
+      <div class="en">Data</div>
+      <div class="where">Per-field confidence in ApplicantProfile · sample format dispatcher</div>
+    </div>
+    <div class="pillar">
+      <div class="icon">📜</div>
+      <div class="ko">정책</div>
+      <div class="en">Policy</div>
+      <div class="where">apply_auto_decision rules · HITL_RISK_THRESHOLD · sanctions cutoff</div>
+    </div>
+    <div class="pillar">
+      <div class="icon">🔐</div>
+      <div class="ko">권한</div>
+      <div class="en">Permission</div>
+      <div class="where">SSO/JWT in @start · reviewer routing by entity + amount</div>
+    </div>
+    <div class="pillar">
+      <div class="icon">✅</div>
+      <div class="ko">검증</div>
+      <div class="en">Verification</div>
+      <div class="where">input_pii_scan · Layer 3 hallucination gate inside run_triage_crew</div>
+    </div>
+    <div class="pillar">
+      <div class="icon">📒</div>
+      <div class="ko">로깅</div>
+      <div class="en">Logging</div>
+      <div class="where">OTel init in @start · spans per @listen · emit_final audit trail</div>
+    </div>
+  </div>
+  <div style="margin-top: 18px;" class="pillars">
+    <div class="pillar" style="grid-column: span 5; border-left: 3px solid var(--accent); text-align: left;">
+      <div class="ko" style="display: inline-block; margin-right: 12px;">개선</div>
+      <span class="en" style="display: inline-block;">Improvement</span>
+      <div class="where" style="text-align: left;">select_risk_llm reads from <code class="mono" style="color:var(--teal);">routing_decision.json</code> — eval-driven model selection updated nightly in production.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== DEMO VS PROD GAPS ===== -->
+<section id="gaps">
+  <div class="section-head">
+    <h2><span class="num">11</span> Demo vs Production Gaps <span class="ko">데모와 운영의 차이</span></h2>
+    <p>The demo is structurally complete but uses stubs where real deployment would replace them. Same Flow shape, swappable internals.</p>
+  </div>
+  <div class="gap-table">
+    <div class="gap-row header">
+      <div class="demo">Demo Today</div>
+      <div class="arrow">→</div>
+      <div class="prod">Production Reality</div>
+    </div>
+    <div class="gap-row">
+      <div class="demo">Stub tools with deterministic <code class="mono">_fixtures.json</code></div>
+      <div class="arrow">→</div>
+      <div class="prod">Real KCB / NICE credit bureau APIs · KoFIU sanctions feed</div>
+    </div>
+    <div class="gap-row">
+      <div class="demo"><code class="mono">issue_demo_jwt</code></div>
+      <div class="arrow">→</div>
+      <div class="prod">Real SAML / OIDC from the bank's IdP</div>
+    </div>
+    <div class="gap-row">
+      <div class="demo">Console-printed HITL queue</div>
+      <div class="arrow">→</div>
+      <div class="prod">Real reviewer queue (email / Slack / 내부 시스템) with resume callback</div>
+    </div>
+    <div class="gap-row">
+      <div class="demo"><code class="mono">routing_decision.json</code> cached eval</div>
+      <div class="arrow">→</div>
+      <div class="prod">Live nightly eval pipeline</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>CrewAI · loan_application_triage architecture · 4 agents × Flow orchestration × HITL pause-resume</div>
+  <div style="margin-top: 4px;">Click any stage or sample to explore. All data references the codebase paths inline.</div>
+</footer>
+
+<script>
+// ===== DATA: stage details =====
+const STAGE_DATA = {
+  begin: {
+    label: "@start · begin",
+    ko: "시작 단계 — 권한 확인 및 관측 초기화",
+    decorator: "start",
+    pillars: ["권한 / Permission", "로깅 / Logging"],
+    code: "main.py:121 (entry)",
+    role: "Boot the run. Issue SSO/JWT, initialize OpenTelemetry tracer, select the sample to process, write the first audit-log entry.",
+    inputs: "Run config · sample_id · operator identity",
+    outputs: "Authenticated TriageState · trace context",
+    notes: "Everything downstream inherits the trace context bound here. Without this stage, span propagation across agents would not work."
+  },
+  select_risk_llm: {
+    label: "select_risk_llm",
+    ko: "위험 분석 LLM 선택",
+    decorator: "listen",
+    pillars: ["개선 / Improvement"],
+    code: "llm_routing.get_risk_llm()",
+    role: "Eval-driven router. Reads routing_decision.json (in production: live nightly eval) and decides which LLM the risk_classifier agent will use for this run.",
+    inputs: "routing_decision.json · sample features",
+    outputs: "Selected LLM identifier (e.g., gpt-4o, claude-sonnet-4-5, hyperclova-x)",
+    notes: "Addresses Korean tool-calling weakness — HyperClova X is strong in Korean NLU but weak on English JSON tool schemas. Routing is data-driven, not opinionated."
+  },
+  input_pii_scan: {
+    label: "input_pii_scan",
+    ko: "입력 PII 마스킹",
+    decorator: "listen",
+    pillars: ["검증 / Verification"],
+    code: "Layer 1 of the 4-layer guardrail stack",
+    role: "Pre-LLM PII scan. Masks resident registration numbers, account numbers, phone numbers, and other regulated identifiers before any text reaches model providers.",
+    inputs: "Raw document text (post-OCR / post-HWP-extraction)",
+    outputs: "Masked text + masking ledger (for audit replay)",
+    notes: "Blocks runs at this layer if unmasked PII is detected. No model call happens on a failed scan."
+  },
+  run_triage_crew: {
+    label: "run_triage_crew",
+    ko: "트리아지 크루 실행",
+    decorator: "listen",
+    pillars: ["데이터 / Data", "정책 / Policy"],
+    code: "main.py:196 · invokes triage_crew sequential kickoff",
+    role: "Run the 4-agent Crew sequentially: intake → kyc → risk → supervisor. Each agent produces a Pydantic-typed output. Layer 3 hallucination gate cross-checks reasoning against retrieved citations.",
+    inputs: "Masked document + sample metadata",
+    outputs: "ApplicantProfile · KYCReport · RiskDecision · Korean Markdown 결재 의견",
+    notes: "This is the only stage that calls the Crew. The other 6 Flow stages are pre/post orchestration around it."
+  },
+  hitl_gate: {
+    label: "hitl_gate",
+    ko: "HITL 게이트 (분기점)",
+    decorator: "router",
+    pillars: ["정책 / Policy"],
+    code: "hitl.py:31 + main.py:256–259",
+    role: "Router. Returns either 'needs_hitl' or 'auto_approve' based on four checks: risk score > 0.7, sanctions hit, any field confidence < 0.6, or crew output parse failure. Any one fires HITL.",
+    inputs: "RiskDecision · KYCReport · ApplicantProfile confidences",
+    outputs: "Branch label string consumed by downstream @listen",
+    notes: "This is the only branch point in the Flow. Adding new escalation paths means adding new return labels here."
+  },
+  route_for_human_review: {
+    label: "route_for_human_review",
+    ko: "사람 결재 경로",
+    decorator: "listen",
+    pillars: ["권한 / Permission"],
+    code: "main.py · wait_for_verdict() · 300s SLA",
+    role: "Hosts the long-running webhook. Sends an email with an HMAC-signed approval token to 소매여신 위험관리역 / 기업금융본부장 / 여신심사역 (routed by entity + amount). Blocks the Flow on wait_for_verdict() until a reviewer responds.",
+    inputs: "Crew output · routing rule (entity + amount)",
+    outputs: "reviewer_verdict + decided_at injected into TriageState",
+    notes: "In-process pause/resume today — daemon-thread webhook in same Python process. Production would swap to @persist or kickoff_async() with a state store, keeping the same Flow shape."
+  },
+  apply_auto_decision: {
+    label: "apply_auto_decision",
+    ko: "자동 결재 적용",
+    decorator: "listen",
+    pillars: ["정책 / Policy"],
+    code: "main.py · apply_auto_decision",
+    role: "Apply the supervisor's verdict directly. Tags the run as approve / reject / pending_review based on the supervisor's recommendation. No human in the loop on this path.",
+    inputs: "Supervisor's Korean Markdown verdict",
+    outputs: "Final decision label persisted to TriageState",
+    notes: "Only entered when all four HITL triggers cleared. Most demo runs (sample 1) take this branch."
+  },
+  emit_final: {
+    label: "emit_final",
+    ko: "최종 출력",
+    decorator: "listen",
+    pillars: ["로깅 / Logging"],
+    code: "@listen(or_(route_for_human_review, apply_auto_decision))",
+    role: "Joins both branches. Writes the full audit-trail JSON to output/*.json — input hash, model versions used, every span ID, the decision, and (if HITL) the reviewer identity and verdict timestamp.",
+    inputs: "TriageState (full)",
+    outputs: "output/<run_id>.json · audit row · OTel trace flush",
+    notes: "Last stage. Closing the trace context here ensures every downstream observer sees a fully-bounded run."
+  }
+};
+
+// ===== DATA: sample paths =====
+const PATH_DATA = {
+  auto: {
+    nodes: ["begin","select_risk_llm","input_pii_scan","run_triage_crew","hitl_gate","apply_auto_decision","emit_final"],
+    edges: ["begin-llm","llm-pii","pii-crew","crew-gate","gate-auto","auto-final"]
+  },
+  review: {
+    nodes: ["begin","select_risk_llm","input_pii_scan","run_triage_crew","hitl_gate","apply_auto_decision","emit_final"],
+    edges: ["begin-llm","llm-pii","pii-crew","crew-gate","gate-auto","auto-final"]
+  },
+  hitl: {
+    nodes: ["begin","select_risk_llm","input_pii_scan","run_triage_crew","hitl_gate","route_for_human_review","emit_final"],
+    edges: ["begin-llm","llm-pii","pii-crew","crew-gate","gate-hitl","hitl-final"]
+  }
+};
+
+const ALL_NODES = ["begin","select_risk_llm","input_pii_scan","run_triage_crew","hitl_gate","route_for_human_review","apply_auto_decision","emit_final"];
+const ALL_EDGES = ["begin-llm","llm-pii","pii-crew","crew-gate","gate-hitl","gate-auto","hitl-final","auto-final"];
+
+// ===== STATE =====
+const state = { sample: null, stage: null };
+
+// ===== RENDERERS =====
+function renderPath() {
+  const path = state.sample ? PATH_DATA[state.sample.path] : null;
+
+  ALL_NODES.forEach(stage => {
+    const groups = document.querySelectorAll(`g.node-group[data-stage="${stage}"] .node`);
+    groups.forEach(rect => {
+      rect.classList.remove("path","path-skipped");
+      if (path) {
+        if (path.nodes.includes(stage)) rect.classList.add("path");
+        else rect.classList.add("path-skipped");
+      }
+    });
+  });
+  ALL_EDGES.forEach(edge => {
+    const elem = document.querySelector(`[data-edge="${edge}"]`);
+    if (!elem) return;
+    elem.classList.remove("path","path-skipped");
+    if (path) {
+      if (path.edges.includes(edge)) {
+        elem.classList.add("path");
+        elem.setAttribute("marker-end","url(#arrow-path)");
+      } else {
+        elem.classList.add("path-skipped");
+        elem.setAttribute("marker-end","url(#arrow)");
+      }
+    } else {
+      elem.setAttribute("marker-end","url(#arrow)");
+    }
+  });
+
+  // HITL trigger cards highlight for sample-3 only
+  document.querySelectorAll(".hitl-card").forEach(card => {
+    card.classList.remove("fires");
+    if (state.sample && state.sample.outcome === "hitl" && card.dataset.firesOn === "hitl") {
+      card.classList.add("fires");
+    }
+  });
+}
+
+function renderStage() {
+  const panel = document.getElementById("detail-panel");
+  // active node
+  document.querySelectorAll("g.node-group .node").forEach(r => r.classList.remove("active"));
+  if (state.stage) {
+    document.querySelectorAll(`g.node-group[data-stage="${state.stage}"] .node`).forEach(r => r.classList.add("active"));
+  }
+
+  if (!state.stage) {
+    panel.innerHTML = `
+      <div class="empty">
+        <div style="font-size: 28px; margin-bottom: 12px;">◉</div>
+        <div>Click a stage in the diagram, or pick a sample, to inspect.</div>
+        ${state.sample ? `
+          <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border); text-align: left;">
+            <div style="font-family: var(--mono); font-size: 11px; color: var(--text-mute); margin-bottom: 8px;">SELECTED SAMPLE</div>
+            <div style="font-family: var(--kor); font-size: 16px; font-weight: 700; color: var(--accent);">${state.sample.name}</div>
+            <div style="font-size: 12px; color: var(--text-mute); margin-top: 4px;">${state.sample.meta}</div>
+            <div style="margin-top: 12px; font-size: 12px; line-height: 1.6;">${state.sample.note}</div>
+          </div>` : ""}
+      </div>`;
+    return;
+  }
+
+  const d = STAGE_DATA[state.stage];
+  if (!d) return;
+  panel.innerHTML = `
+    <h3>${d.label} <span class="tag">${d.code.split(' ')[0]}</span></h3>
+    <div class="ko">${d.ko}</div>
+    <div style="margin-bottom: 14px;">
+      <span class="pill ${d.decorator}">@${d.decorator}</span>
+      ${d.pillars.map(p => `<span class="pill listen">${p}</span>`).join("")}
+    </div>
+    <dl>
+      <div><dt>Role</dt><dd>${d.role}</dd></div>
+      <div><dt>Inputs</dt><dd>${d.inputs}</dd></div>
+      <div><dt>Outputs</dt><dd>${d.outputs}</dd></div>
+      <div><dt>Code</dt><dd><code>${d.code}</code></dd></div>
+      <div><dt>Note</dt><dd style="color: var(--text-mute);">${d.notes}</dd></div>
+    </dl>
+  `;
+}
+
+// ===== EVENT HANDLERS =====
+document.querySelectorAll(".persona").forEach(p => {
+  p.addEventListener("click", () => {
+    const wasActive = p.classList.contains("active");
+    document.querySelectorAll(".persona").forEach(x => x.classList.remove("active"));
+    if (wasActive) {
+      state.sample = null;
+    } else {
+      p.classList.add("active");
+      state.sample = {
+        id: p.dataset.sample,
+        path: p.dataset.path,
+        outcome: p.dataset.outcome,
+        name: p.querySelector(".name").textContent,
+        meta: p.querySelector(".meta").textContent,
+        note: pathNote(p.dataset.outcome)
+      };
+    }
+    renderPath();
+    renderStage();
+  });
+});
+
+function pathNote(outcome) {
+  if (outcome === "auto-approve") return "Low risk score, clean KYC, high field confidence → all four HITL triggers clear → auto-approve branch.";
+  if (outcome === "review") return "Mid risk score, clean KYC, sufficient field confidence → auto branch, but supervisor verdict is 'review'. Most common 90-second demo path.";
+  if (outcome === "hitl") return "High risk score (> 0.7) AND scanned PNG produces low field confidence (< 0.6) → two HITL triggers fire → human review branch. Reviewer routing is by entity + amount.";
+  return "";
+}
+
+document.querySelectorAll("g.node-group").forEach(g => {
+  g.addEventListener("click", () => {
+    const stage = g.dataset.stage;
+    state.stage = (state.stage === stage) ? null : stage;
+    renderStage();
+  });
+  g.style.cursor = "pointer";
+});
+
+// init
+renderPath();
+renderStage();
+</script>
+
+</body>
+</html>
